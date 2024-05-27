@@ -1,6 +1,6 @@
 - name: Get list of existing Kafka topics
   command: /opt/kafka/bin/kafka-topics.sh --zookeeper {{ingestion_zookeeper_ip}}:2181 --list
-  register: ingestion_kafka_topics
+  register: existing_ingestion_kafka_topics
   tags:
     - ingestion-kafka
 
@@ -8,7 +8,7 @@
   command: /opt/kafka/bin/kafka-topics.sh --zookeeper {{ingestion_zookeeper_ip}}:2181 --create --topic "{{env}}.{{ item.name}}" --partitions {{ item.num_of_partitions}} --replication-factor {{ item.replication_factor}}
   with_items: "{{ingestion_kafka_topics}}"
   ignore_errors: true
-  when: kafka_id == "1" and "{{ item.name }}" not in ingestion_kafka.stdout_lines
+  when: kafka_id == "1" and "{{env}}.{{ item.name }}" not in existing_ingestion_kafka_topics.stdout_lines
   tags:
     - ingestion-kafka
 
@@ -21,15 +21,15 @@
 
 - name: Get list of existing Kafka topics
   command: /opt/kafka/bin/kafka-topics.sh --zookeeper {{processing_zookeeper_ip}}:2181 --list
-  register: processing_kafka_topics
+  register: existing_processing_kafka_topics
   tags:
     - processing-kafka
 
 - name: create topics
   command: /opt/kafka/bin/kafka-topics.sh --zookeeper {{processing_zookeeper_ip}}:2181 --create --topic "{{env}}.{{ item.name}}" --partitions {{ item.num_of_partitions}} --replication-factor {{ item.replication_factor}}
-  with_items: "{{processing_kafka_topics}}"
   ignore_errors: true
-  when: kafka_id == "1" and "{{ item.name }}" not in processing_kafka_topics.stdout_lines
+  when: kafka_id == "1" and "{{env}}.{{ item.name }}" not in existing_processing_kafka_topics.stdout_lines
+  with_items: "{{processing_kafka_topics}}"
   tags:
     - processing-kafka
 
